@@ -1,0 +1,85 @@
+<mvt:comment>
+INSERT SHIPPING CHARGE IN DATABASE
+</mvt:comment>
+<mvt:if expr="NOT('pickup' CIN g.ShippingMethod) AND NOT('electronic' CIN g.ShippingMethod) AND NOT('free' CIN g.ShippingMethod)">
+    <mvt:if expr="'ground' CIN g.ShippingMethod">
+        <mvt:item name="ry_toolbelt" param="assign|g.ShippingCharge|g.GroundChargeValue" />
+    <mvt:elseif expr="'air' CIN g.ShippingMethod">
+        <mvt:item name="ry_toolbelt" param="assign|g.ShippingCharge|g.AirChargeValue" />
+    <mvt:else>
+        <mvt:item name="ry_toolbelt" param="assign|g.ShippingCharge|'25.00'" />
+    </mvt:if>
+    <mvt:item name="ry_toolbelt" param="assign|g.type|'SHIPPING'" />
+    <mvt:item name="ry_toolbelt" param="assign|g.basketid|g.basket:basket_id" />
+    <mvt:item name="ry_toolbelt" param="assign|g.insert_sql|'
+    UPDATE s01_BasketCharges 
+       SET amount = `'$ MySqlEscape(g.ShippingCharge) $'`, 
+           disp_amt = `'$ MySqlEscape(g.ShippingCharge) $'` 
+     WHERE basket_id = `'$ MySqlEscape(g.basketid) $'` 
+       AND type = `'$ MySqlEscape(g.type) $'` 
+    '" />
+    <mvt:item name="ry_toolbelt" param="query|g.insert_sql|null" />
+</mvt:if>
+
+<mvt:comment>
+TAX CHARGE LOGIC FOR NON INSTORE PICKUP ORDERS
+</mvt:comment>
+<mvt:if expr="g.ShippingCharge NE 0 AND g.basket:ship_state EQ 'NY'">
+    
+    <mvt:foreach iterator="charge" array="basket:charges">
+        <mvt:if expr="('shipping' CIN l.settings:charge:descrip) AND (g.ShippingCharge EQ l.settings:charge:disp_amt)">
+            <mvt:item name="toolkit" param="mvassign|g.ShippingChargeAdded|1" />
+        </mvt:if>
+    </mvt:foreach>
+    
+    <mvt:foreach iterator="charge" array="basket:charges">
+        <mvt:if expr="'tax' CIN l.settings:charge:descrip AND NOT(g.ShippingChargeAdded)">
+            <mvt:item name="toolkit" param="mvassign|g.OldTaxCharge|l.all_settings:charge:disp_amt" />
+            <mvt:item name="toolkit" param="mvassign|g.TaxCharge|(g.ShippingCharge + l.all_settings:basket:total - l.all_settings:charge:disp_amt) * 0.08" />
+            <mvt:item name="toolkit" param="math_round|TaxCharge|TaxCharge|2" />
+        </mvt:if>
+    </mvt:foreach>
+    
+    <mvt:item name="toolkit" param="mvassign|g.addTaxValue|1" />
+
+</mvt:if>
+
+<mvt:comment>
+TAX CHARGE LOGIC FOR INSTORE PICKUP ORDERS
+</mvt:comment>
+<mvt:if expr="'pickup' CIN g.ShippingMethod AND g.basket:ship_state NE 'NY'">
+
+    <mvt:foreach iterator="charge" array="basket:charges">
+        <mvt:if expr="'tax' CIN l.settings:charge:descrip">
+            <mvt:item name="toolkit" param="mvassign|g.OldTaxCharge|l.all_settings:charge:disp_amt" />
+            <mvt:item name="toolkit" param="mvassign|g.TaxCharge|(l.all_settings:basket:total - l.all_settings:charge:disp_amt) * 0.08" />
+            <mvt:item name="toolkit" param="math_round|TaxCharge|TaxCharge|2" />
+        </mvt:if>
+    </mvt:foreach>
+    
+    <mvt:item name="toolkit" param="mvassign|g.addTaxValue|1" />
+   
+</mvt:if>
+
+<mvt:comment>
+INSERT TAX CHARGE IN DATABASE
+</mvt:comment>
+<mvt:if expr="g.addTaxValue EQ 1">
+    <mvt:item name="ry_toolbelt" param="assign|g.tax_type|'TAX'" />
+    <mvt:item name="ry_toolbelt" param="assign|g.basketid|g.basket:basket_id" />
+    <mvt:item name="ry_toolbelt" param="assign|g.insert_sql|'
+    UPDATE s01_BasketCharges 
+       SET amount = `'$ MySqlEscape(g.TaxCharge) $'`, 
+           disp_amt = `'$ MySqlEscape(g.TaxCharge) $'` 
+     WHERE basket_id = `'$ MySqlEscape(g.basketid) $'` 
+       AND type = `'$ MySqlEscape(g.tax_type) $'` 
+    '" />
+    <mvt:item name="ry_toolbelt" param="query|g.insert_sql|null" />        
+</mvt:if>
+
+<mvt:comment>CHECKING COUPON CODE FOR FREE SHIPPING</mvt:comment>
+<mvt:foreach iterator="charge" array="basket:charges">
+    <mvt:if expr="'Coupon' CIN l.settings:charge:descrip">
+        <mvt:item name="toolkit" param="gettoken|l.all_settings:charge:descrip, ,2|coupon_code" />
+    </mvt:if>
+</mvt:foreach>
