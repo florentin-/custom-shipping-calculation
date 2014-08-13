@@ -1,3 +1,5 @@
+<mvt:comment>GET BASKET QUANTITIES</mvt:comment>
+
 <mvt:foreach iterator="item" array="basket:items">
     <mvt:assign name="l.settings:item:ml" value="l.settings:item:customfield_values:customfields:ml" />
     <mvt:assign name="l.settings:item:freeshp" value="l.settings:item:customfield_values:customfields:freeshp" />
