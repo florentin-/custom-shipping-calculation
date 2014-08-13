@@ -1,0 +1,279 @@
+<mvt:foreach iterator="item" array="basket:items">
+    <mvt:assign name="l.settings:item:ml" value="l.settings:item:customfield_values:customfields:ml" />
+    <mvt:assign name="l.settings:item:freeshp" value="l.settings:item:customfield_values:customfields:freeshp" />
+    <mvt:if expr="NOT ISNULL l.settings:item:ml">
+        <mvt:if expr="l.settings:item:ml LT '375'">
+            <mvt:assign name="l.settings:group_qty:under375" value="l.settings:group_qty:under375 + l.settings:item:quantity" />
+        <mvt:elseif expr="l.settings:item:ml LT '1001'">
+            <mvt:assign name="l.settings:group_qty:375to1Ltr" value="l.settings:group_qty:375to1Ltr + l.settings:item:quantity" />
+            <mvt:if expr="l.settings:item:freeshp EQ 1">
+                <mvt:assign name="l.settings:group_qty:freeshp_375to1Ltr" value="l.settings:group_qty:freeshp_375to1Ltr + l.settings:item:quantity" />
+            </mvt:if>
+        <mvt:else>
+            <mvt:assign name="l.settings:group_qty:over1dot5" value="l.settings:group_qty:over1dot5 + l.settings:item:quantity" />
+            <mvt:if expr="l.settings:item:freeshp EQ 1">
+                <mvt:assign name="l.settings:group_qty:freeshp_over1dot5" value="l.settings:group_qty:freeshp_over1dot5 + l.settings:item:quantity" />
+            </mvt:if>
+        </mvt:if>
+    <mvt:elseif expr="l.settings:item:code EQ 'gift_certificate'">
+    	<mvt:assign name="l.settings:group_qty:gift_cert" value="l.settings:group_qty:gift_cert + l.settings:item:quantity" />
+    <mvt:else>
+    	<mvt:assign name="l.settings:group_qty:accessories" value="l.settings:group_qty:accessories + l.settings:item:quantity" />
+    </mvt:if>
+</mvt:foreach>
+
+<mvt:comment>FREE SHIPPING 6+ CALCULATIONS</mvt:comment>
+
+<mvt:assign name="l.settings:group_qty:freeshp" value="l.settings:group_qty:freeshp_375to1Ltr + l.settings:group_qty:freeshp_over1dot5" />
+
+<mvt:if expr="l.settings:group_qty:freeshp GE 6">
+    <mvt:assign name="l.settings:group_qty:freeshp_enable" value="1" />
+</mvt:if>
+
+<mvt:if expr="g.testing EQ 1">
+Free Shipping Quantity: &mvt:group_qty:freeshp;<br /><br />
+</mvt:if>
+
+<mvt:if expr="NOT ISNULL l.settings:group_qty:freeshp_enable">
+	<mvt:assign name="l.settings:group_qty:375to1Ltr" value="l.settings:group_qty:375to1Ltr - l.settings:group_qty:freeshp_375to1Ltr" />
+    <mvt:assign name="l.settings:group_qty:over1dot5" value="l.settings:group_qty:over1dot5 - l.settings:group_qty:freeshp_over1dot5" />
+</mvt:if>
+
+<mvt:comment>GROUND CALCULATIONS</mvt:comment>
+
+<mvt:comment>Quantity based charges for under 375ml bottles</mvt:comment>
+<mvt:if expr="g.State CIN 'NY'">
+    <mvt:assign name="l.settings:grnd_ship:under375_value" value="22" />
+<mvt:elseif expr="g.State CIN 'NJ,PA,CT,DC,MI,OH,VT,VA,WV,ME,MD,DE'">
+    <mvt:assign name="l.settings:grnd_ship:under375_value" value="25" />
+<mvt:elseif expr="g.State CIN 'GA,IL,IA,MN,MO,NE,SC,IN,NC'">
+    <mvt:assign name="l.settings:grnd_ship:under375_value" value="27" />
+<mvt:elseif expr="g.State CIN 'AZ,CA,NM,OR,WA,WY,ID,CO,TX,NV'">
+    <mvt:assign name="l.settings:grnd_ship:under375_value" value="38" />
+<mvt:elseif expr="g.State CIN 'WI,FL,LA,SD,TN,KS,AL,ND'">
+    <mvt:assign name="l.settings:grnd_ship:under375_value" value="32" />
+</mvt:if>
+
+<mvt:assign name="l.settings:grnd_ship:under375_final_value" value="l.settings:grnd_ship:under375_value * ( l.settings:group_qty:under375 / 30 )" />
+
+<mvt:comment>Quantity based charges for 375ml to 1Ltr bottles</mvt:comment>
+<mvt:if expr="g.State CIN 'NY'">
+    <mvt:assign name="l.settings:grnd_ship:375to1Ltr_values" value="miva_array_deserialize( '13,14,15,16,17,17,18,18,19,20,21,22' )" />
+<mvt:elseif expr="g.State CIN 'NJ,PA,CT,DC,MI,OH,VT,VA,WV,ME,MD,DE'">
+    <mvt:assign name="l.settings:grnd_ship:375to1Ltr_values" value="miva_array_deserialize( '14,15,16,17,17,18,20,21,22,23,24,25' )" />
+<mvt:elseif expr="g.State CIN 'GA,IL,IA,MN,MO,NE,SC,IN,NC'">
+    <mvt:assign name="l.settings:grnd_ship:375to1Ltr_values" value="miva_array_deserialize( '15,16,17,18,19,21,22,23,24,25,26,27' )" />
+<mvt:elseif expr="g.State CIN 'WI,FL,LA,SD,TN,KS,AL,ND,AR'">
+    <mvt:assign name="l.settings:grnd_ship:375to1Ltr_values" value="miva_array_deserialize( '16,17,18,19,20,22,23,24,26,28,30,32' )" />
+<mvt:elseif expr="g.State CIN 'AZ,CA,NM,OR,WA,WY,ID,CO,TX,NV'">
+    <mvt:assign name="l.settings:grnd_ship:375to1Ltr_values" value="miva_array_deserialize( '16,17,19,20,22,24,29,31,35,36,37,38' )" />
+</mvt:if>
+
+<mvt:assign name="l.settings:grnd_ship:375to1Ltr_array_length" value="miva_array_max( l.settings:grnd_ship:375to1Ltr_values )" />
+    
+<mvt:assign name="g.375to1Ltr_grnd_quantity_pow" value="(l.settings:group_qty:375to1Ltr / l.settings:grnd_ship:375to1Ltr_array_length) ROUND 2 - 0.01" />
+<mvt:assign name="g.375to1Ltr_grnd_quantity_pow" value="gettoken( g.375to1Ltr_grnd_quantity_pow, '.', 1 )" />
+<mvt:assign name="l.settings:group_qty:375to1Ltr_grnd" value="l.settings:group_qty:375to1Ltr" />
+
+<mvt:if expr="l.settings:group_qty:375to1Ltr GT 12">
+    <mvt:assign name="l.settings:group_qty:375to1Ltr_grnd" value="l.settings:group_qty:375to1Ltr - ( l.settings:grnd_ship:375to1Ltr_array_length * g.375to1Ltr_grnd_quantity_pow )" />
+    <mvt:assign name="l.settings:grnd_ship:375to1Ltr_base" value="l.settings:grnd_ship:375to1Ltr_values[l.settings:grnd_ship:375to1Ltr_array_length] * g.375to1Ltr_grnd_quantity_pow" />
+</mvt:if>
+
+<mvt:if expr="l.settings:group_qty:375to1Ltr_grnd GT 0">
+	<mvt:assign name="l.settings:grnd_ship:375to1Ltr_final_value" value="l.settings:grnd_ship:375to1Ltr_values[l.settings:group_qty:375to1Ltr_grnd] + l.settings:grnd_ship:375to1Ltr_base" />
+<mvt:else>
+    <mvt:assign name="l.settings:grnd_ship:375to1Ltr_final_value" value="0" />
+</mvt:if>
+
+<mvt:comment>Quantity based charges for over 1.5Ltr bottles</mvt:comment>
+<mvt:if expr="g.State CIN 'NY'">
+    <mvt:assign name="l.settings:grnd_ship:over1dot5_values" value="miva_array_deserialize( '15,19,20,21,23,25' )" />
+<mvt:elseif expr="g.State CIN 'CT,NJ,PA,OH,VT,MI,DC,ME,MD,DE'">
+    <mvt:assign name="l.settings:grnd_ship:over1dot5_values" value="miva_array_deserialize( '18,22,24,25,27,30' )" />
+<mvt:elseif expr="g.State CIN 'NC,VA,SC,WI,WV,IN'">
+    <mvt:assign name="l.settings:grnd_ship:over1dot5_values" value="miva_array_deserialize( '20,24,26,27,30,32' )" />
+<mvt:elseif expr="g.State CIN 'FL,MN,GA,IL,IA,LA,MO,TN,AL,AR'">
+    <mvt:assign name="l.settings:grnd_ship:over1dot5_values" value="miva_array_deserialize( '21,25,28,30,33,36' )" />
+<mvt:elseif expr="g.State CIN 'AZ,CA,CO,ID,NE,NM,OR,SD,WA,WY,KS,TX,NV,ND'">
+    <mvt:assign name="l.settings:grnd_ship:over1dot5_values" value="miva_array_deserialize( '22,27,30,36,40,43' )" />
+</mvt:if>
+
+<mvt:assign name="l.settings:grnd_ship:over1dot5_array_length" value="miva_array_max( l.settings:grnd_ship:over1dot5_values )" />
+    
+<mvt:assign name="g.over1dot5_grnd_quantity_pow" value="(l.settings:group_qty:over1dot5 / l.settings:grnd_ship:over1dot5_array_length) ROUND 2 - 0.01" />
+<mvt:assign name="g.over1dot5_grnd_quantity_pow" value="gettoken( g.over1dot5_grnd_quantity_pow, '.', 1 )" />
+
+<mvt:assign name="l.settings:group_qty:over1dot5_grnd" value="l.settings:group_qty:over1dot5" />
+<mvt:if expr="l.settings:group_qty:over1dot5 GT 6">
+    <mvt:assign name="l.settings:group_qty:over1dot5_grnd" value="l.settings:group_qty:over1dot5 - ( l.settings:grnd_ship:over1dot5_array_length * g.over1dot5_grnd_quantity_pow )" />
+    <mvt:assign name="l.settings:grnd_ship:over1dot5_base" value="l.settings:grnd_ship:over1dot5_values[l.settings:grnd_ship:over1dot5_array_length] * g.over1dot5_grnd_quantity_pow" />
+</mvt:if>
+
+<mvt:if expr="l.settings:group_qty:over1dot5_grnd GT 0">
+	<mvt:assign name="l.settings:grnd_ship:over1dot5_final_value" value="l.settings:grnd_ship:over1dot5_values[l.settings:group_qty:over1dot5_grnd] + l.settings:grnd_ship:over1dot5_base" />
+<mvt:else>
+	<mvt:assign name="l.settings:grnd_ship:over1dot5_final_value" value="0" />
+</mvt:if>
+
+<mvt:comment>Quantity based charges for accessories</mvt:comment>
+<mvt:if expr="l.settings:group_qty:accessories EQ 0">
+	<mvt:assign name="l.settings:grnd_ship:accessories_final_value" value="0" />
+<mvt:elseif expr="l.settings:group_qty:accessories LE 24">
+	<mvt:assign name="l.settings:grnd_ship:accessories_final_value" value="8" />
+<mvt:elseif expr="l.settings:group_qty:accessories LE 48">
+	<mvt:assign name="l.settings:grnd_ship:accessories_final_value" value="16" />
+<mvt:elseif expr="l.settings:group_qty:accessories LE 72">
+	<mvt:assign name="l.settings:grnd_ship:accessories_final_value" value="24" />
+<mvt:else>
+	<mvt:assign name="l.settings:grnd_ship:accessories_final_value" value="32" />
+</mvt:if>
+
+<mvt:comment>Quantity based charges for gift certificates</mvt:comment>
+<mvt:if expr="NOT ISNULL l.settings:group_qty:gift_cert">
+	<mvt:assign name="l.settings:grnd_ship:gift_cert_final_value" value="0" />
+</mvt:if>
+
+<mvt:assign name="l.settings:grnd_ship:all" value="(l.settings:grnd_ship:under375_final_value + l.settings:grnd_ship:375to1Ltr_final_value + l.settings:grnd_ship:over1dot5_final_value + l.settings:grnd_ship:accessories_final_value + l.settings:grnd_ship:gift_cert_final_value) ROUND 2" />
+<mvt:item name="toolkit" param="currencyformat|g.grnd_ship_formatted|l.all_settings:grnd_ship:all" />
+
+<mvt:comment>RESET FREE SHIPPING CALCULATIONS FOR AIR SHIPPING</mvt:comment>
+
+<mvt:if expr="NOT ISNULL l.settings:group_qty:freeshp_enable">
+	<mvt:assign name="l.settings:group_qty:375to1Ltr" value="l.settings:group_qty:375to1Ltr + l.settings:group_qty:freeshp_375to1Ltr" />
+    <mvt:assign name="l.settings:group_qty:over1dot5" value="l.settings:group_qty:over1dot5 + l.settings:group_qty:freeshp_over1dot5" />
+</mvt:if>
+
+<mvt:comment>AIR CALCULATIONS</mvt:comment>
+
+<mvt:comment>Quantity based charges for under 375ml bottles</mvt:comment>
+<mvt:if expr="g.State CIN 'CT,NY,NJ,PA,OH,MI,DC,VT,ME,MD,DE'">
+    <mvt:assign name="l.settings:air_ship:under375_value" value="62" />
+<mvt:elseif expr="g.State CIN 'VA,WI,IL,WV,IN'">
+    <mvt:assign name="l.settings:air_ship:under375_value" value="100" />
+<mvt:elseif expr="g.State CIN 'GA,IA,MN,MO,NC,SC,NE,TN'">
+    <mvt:assign name="l.settings:air_ship:under375_value" value="110" />
+<mvt:elseif expr="g.State CIN 'AZ,CA,ID,OR,WA,WY,TX,NV'">
+    <mvt:assign name="l.settings:air_ship:under375_value" value="121" />
+<mvt:elseif expr="g.State CIN 'CO,LA,SD,FL,NM,KS,AL,ND'">
+    <mvt:assign name="l.settings:air_ship:under375_value" value="115" />
+</mvt:if>
+
+<mvt:assign name="l.settings:air_ship:under375_final_value" value="l.settings:air_ship:under375_value * ( l.settings:group_qty:under375 / 30 )" />
+
+<mvt:comment>Quantity based charges for 375ml to 1Ltr bottles</mvt:comment>
+<mvt:if expr="g.State CIN 'CT,NY,NJ,PA,OH,MI,DC,VT,ME,MD,DE'">
+    <mvt:assign name="l.settings:air_ship:375to1Ltr_values" value="miva_array_deserialize( '28,30,34,38,42,45,48,51,54,57,60,62' )" />
+<mvt:elseif expr="g.State CIN 'VA,WI,IL,WV,IN'">
+    <mvt:assign name="l.settings:air_ship:375to1Ltr_values" value="miva_array_deserialize( '32,41,48,54,63,68,72,77,84,90,95,100' )" />
+<mvt:elseif expr="g.State CIN 'CO,LA,SD,FL,NM,KS,AL,ND,AR'">
+    <mvt:assign name="l.settings:air_ship:375to1Ltr_values" value="miva_array_deserialize( '38,47,57,65,73,78,82,90,97,103,110,115' )" />
+<mvt:elseif expr="g.State CIN 'GA,IA,MN,MO,NC,SC,NE,TN'">
+    <mvt:assign name="l.settings:air_ship:375to1Ltr_values" value="miva_array_deserialize( '37,46,53,59,68,73,78,84,91,97,104,110' )" />
+<mvt:elseif expr="g.State CIN 'AZ,CA,ID,OR,WA,WY,TX,NV'">
+    <mvt:assign name="l.settings:air_ship:375to1Ltr_values" value="miva_array_deserialize( '40,52,60,68,77,84,89,95,103,111,115,121' )" />
+</mvt:if>
+
+<mvt:assign name="l.settings:air_ship:375to1Ltr_array_length" value="miva_array_max( l.settings:air_ship:375to1Ltr_values )" />
+    
+<mvt:assign name="g.375to1Ltr_air_quantity_pow" value="(l.settings:group_qty:375to1Ltr / l.settings:air_ship:375to1Ltr_array_length) ROUND 2 - 0.01" />
+<mvt:assign name="g.375to1Ltr_air_quantity_pow" value="gettoken( g.375to1Ltr_air_quantity_pow, '.', 1 )" />
+
+<mvt:assign name="l.settings:group_qty:375to1Ltr_air" value="l.settings:group_qty:375to1Ltr" />
+<mvt:if expr="l.settings:group_qty:375to1Ltr GT 12">
+    <mvt:assign name="l.settings:group_qty:375to1Ltr_air" value="l.settings:group_qty:375to1Ltr - ( l.settings:air_ship:375to1Ltr_array_length * g.375to1Ltr_air_quantity_pow )" />
+    <mvt:assign name="l.settings:air_ship:375to1Ltr_base" value="l.settings:air_ship:375to1Ltr_values[l.settings:air_ship:375to1Ltr_array_length] * g.375to1Ltr_air_quantity_pow" />
+</mvt:if>
+
+<mvt:if expr="l.settings:group_qty:375to1Ltr_air GT 0">
+
+	<mvt:assign name="l.settings:air_ship:375to1Ltr_final_value" value="l.settings:air_ship:375to1Ltr_values[l.settings:group_qty:375to1Ltr_air] + l.settings:air_ship:375to1Ltr_base" />
+<mvt:else>
+	<mvt:assign name="l.settings:air_ship:375to1Ltr_final_value" value="0" />
+</mvt:if>
+
+<mvt:comment>Quantity based charges for over 1.5Ltr bottles</mvt:comment>
+<mvt:if expr="g.State CIN 'NY,CT,DC,MI,NJ,OH,PA,VT,ME,MD,DE,TX'">
+    <mvt:assign name="l.settings:air_ship:over1dot5_values" value="miva_array_deserialize( '53,62,72,82,89,100' )" />
+<mvt:elseif expr="g.State CIN 'VA,NC,SC,WI,FL,MN,GA,IL,IA,LA,MO,WV,IN,TN,AL,AR'">
+    <mvt:assign name="l.settings:air_ship:over1dot5_values" value="miva_array_deserialize( '87,106,124,137,152,168' )" />
+<mvt:elseif expr="g.State CIN 'AZ,CA,CO,ID,NE,NM,OR,SD,WA,WY,KS,ND,NV'">
+    <mvt:assign name="l.settings:air_ship:over1dot5_values" value="miva_array_deserialize( '91,112,132,147,162,178' )" />
+</mvt:if>
+
+<mvt:assign name="l.settings:air_ship:over1dot5_array_length" value="miva_array_max( l.settings:air_ship:over1dot5_values )" />
+    
+<mvt:assign name="g.over1dot5_air_quantity_pow" value="(l.settings:group_qty:over1dot5 / l.settings:air_ship:over1dot5_array_length) ROUND 2 - 0.01" />
+<mvt:assign name="g.over1dot5_air_quantity_pow" value="gettoken( g.over1dot5_air_quantity_pow, '.', 1 )" />
+
+<mvt:assign name="l.settings:group_qty:over1dot5_air" value="l.settings:group_qty:over1dot5" />
+<mvt:if expr="l.settings:group_qty:over1dot5 GT 6">
+    <mvt:assign name="l.settings:group_qty:over1dot5_air" value="l.settings:group_qty:over1dot5 - ( l.settings:air_ship:over1dot5_array_length * g.over1dot5_air_quantity_pow )" />
+    <mvt:assign name="l.settings:air_ship:over1dot5_base" value="l.settings:air_ship:over1dot5_values[l.settings:air_ship:over1dot5_array_length] * g.over1dot5_air_quantity_pow" />
+</mvt:if>
+
+<mvt:if expr="l.settings:group_qty:over1dot5_air GT 0">
+	<mvt:assign name="l.settings:air_ship:over1dot5_final_value" value="l.settings:air_ship:over1dot5_values[l.settings:group_qty:over1dot5_air] + l.settings:air_ship:over1dot5_base" />
+<mvt:else>
+	<mvt:assign name="l.settings:air_ship:over1dot5_final_value" value="0" />
+</mvt:if>
+
+<mvt:comment>Quantity based charges for accessories</mvt:comment>
+<mvt:if expr="l.settings:group_qty:accessories EQ 0">
+	<mvt:assign name="l.settings:air_ship:accessories_final_value" value="0" />
+<mvt:elseif expr="l.settings:group_qty:accessories LE 24">
+	<mvt:assign name="l.settings:air_ship:accessories_final_value" value="25" />
+<mvt:elseif expr="l.settings:group_qty:accessories LE 48">
+	<mvt:assign name="l.settings:air_ship:accessories_final_value" value="50" />
+<mvt:elseif expr="l.settings:group_qty:accessories LE 72">
+	<mvt:assign name="l.settings:air_ship:accessories_final_value" value="75" />
+<mvt:else>
+	<mvt:assign name="l.settings:air_ship:accessories_final_value" value="100" />
+</mvt:if>
+
+<mvt:comment>Quantity based charges for gift certificates</mvt:comment>
+<mvt:if expr="NOT ISNULL l.settings:group_qty:gift_cert">
+	<mvt:assign name="l.settings:grnd_ship:gift_cert_final_value" value="0" />
+</mvt:if>
+
+<mvt:comment>TOTALS</mvt:comment>
+<mvt:assign name="l.settings:air_ship:all" value="(l.settings:air_ship:under375_final_value + l.settings:air_ship:375to1Ltr_final_value + l.settings:air_ship:over1dot5_final_value + l.settings:air_ship:accessories_final_value + l.settings:air_ship:gift_cert_final_value) ROUND 2" />
+<mvt:item name="toolkit" param="currencyformat|g.air_ship_formatted|l.all_settings:air_ship:all" />
+
+<mvt:assign name="g.air_ship_charge" value="l.settings:air_ship:all" />
+<mvt:assign name="g.grnd_ship_charge" value="l.settings:grnd_ship:all" />
+
+<mvt:if expr="NOT(g.ReturnCharge)">
+
+    <mvt:if expr="g.testing EQ 1">
+    ======================================================================<br /><br />
+    Basket Counts:<br />
+    Under 375ml: &mvt:group_qty:under375;<br>
+    375ml to 1Ltr: &mvt:group_qty:375to1Ltr;<br>
+    Over 1.5Ltr: &mvt:group_qty:over1dot5;<br>
+    Accesories: &mvt:group_qty:accessories;<br><br />
+    ======================================================================<br><br />
+    
+    Total ground shipping charge for bottles under 375ml: &mvt:grnd_ship:under375_final_value;<br>
+    Total ground shipping charge for bottles 375ml to 1Ltr: &mvt:grnd_ship:375to1Ltr_final_value;<br>
+    Total ground shipping charge for bottles over 1.5Ltr: &mvt:grnd_ship:over1dot5_final_value;<br>
+    Total ground shipping charge for accessories: &mvt:grnd_ship:accessories_final_value;<br><br />
+    
+    ======================================================================<br />
+    
+    Total air shipping charge for bottles under 375ml: &mvt:air_ship:under375_final_value;<br>
+    Total air shipping charge for bottles 375ml to 1Ltr: &mvt:air_ship:375to1Ltr_final_value;<br>
+    Total air shipping charge for bottles over 1.5Ltr: &mvt:air_ship:over1dot5_final_value;<br>
+    Total air shipping charge for accessories: &mvt:air_ship:accessories_final_value;<br><br />
+    
+    ======================================================================<br />
+    </mvt:if>
+    
+    <div class="shipping-estimate-container">
+        <p>Here are estimated shipping charges for <b>&mvt:global:State;</b>:</p>
+        Ground Shipping: <b>&mvt:global:grnd_ship_formatted;</b><br />
+        Air Shipping: <b>&mvt:global:air_ship_formatted;</b><br /><br />
+        <mvt:if expr="g.testing NE 1"><a href="#" id="estimate-change">Change State</a></mvt:if>
+    </div>
+
+</mvt:if>
